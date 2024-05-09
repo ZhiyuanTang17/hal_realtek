@@ -1146,6 +1146,7 @@ extern struct _timeout *get_next_timeout(struct _timeout *);
 extern void z_timer_expiration_handler(struct _timeout *t);
 extern void z_thread_timeout(struct _timeout *t);
 
+extern void sys_clock_announce_bypass_timeout_function(int32_t ticks);
 void os_pm_return_to_idle_task_zephyr(void)
 {
     arch_kernel_init();//perform arm v81mainline initialization: including fault exception init & msp setting.
@@ -1164,7 +1165,7 @@ void os_pm_return_to_idle_task_zephyr(void)
     __set_CONTROL(__get_CONTROL() | BIT1);
     __ISB();
 
-    os_pm_restore_tickcount();//restore tickcount and process timeout callback
+    sys_clock_announce(0);
 
     extern void z_thread_entry(k_thread_entry_t, void *, void *, void *);
     extern void idle(void *, void *, void *);
@@ -1187,6 +1188,7 @@ void os_pm_store_zephyr(void)
 
 void os_pm_restore_zephyr(void)
 {
+    os_pm_restore_tickcount();
 
     os_sched_restore_zephyr();
 }
@@ -1201,8 +1203,8 @@ void os_systick_handler_zephyr(void)
 uint64_t os_sys_tick_increase_zephyr(uint32_t tick_increment)
 {
     int64_t old_tick = sys_clock_tick_get();
-    sys_clock_announce(tick_increment);
-    z_arm_int_exit();
+    sys_clock_announce_bypass_timeout_function(tick_increment);
+    //z_arm_int_exit();
     return old_tick;
 }
 
