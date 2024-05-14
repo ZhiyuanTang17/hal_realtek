@@ -20,3 +20,4 @@ Bzdma_Manager = 0x0013fb54 ;
 g_modem_psd_report_array = 0x0013ffd8 ;
 rcp_BB_handle_psd_end_intr_func = 0x00141218 ;
 rcp_BTMAC_Handler = 0x00141230 ;
+btmac_pm_feature_cfg = 0x0013fe48 ;

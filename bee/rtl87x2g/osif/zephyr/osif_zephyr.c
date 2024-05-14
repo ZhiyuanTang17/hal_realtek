@@ -1149,7 +1149,12 @@ extern void z_thread_timeout(struct _timeout *t);
 extern void sys_clock_announce_bypass_timeout_function(int32_t ticks);
 void os_pm_return_to_idle_task_zephyr(void)
 {
+    extern void pm_resume_devices_rtk(void);
+    pm_resume_devices_rtk();
+    
     arch_kernel_init();//perform arm v81mainline initialization: including fault exception init & msp setting.
+
+    RamVectorTableUpdate(GDMA0_Channel9_VECTORn, _isr_wrapper);
 
     NVIC_SetPriority(PendSV_IRQn, 0xff);
     NVIC_SetPriority(SysTick_IRQn, 0xff);
@@ -1165,7 +1170,9 @@ void os_pm_return_to_idle_task_zephyr(void)
     __set_CONTROL(__get_CONTROL() | BIT1);
     __ISB();
 
-    sys_clock_announce(0);
+    extern void sys_clock_announce_process_timeout(void);
+    sys_clock_announce_process_timeout();
+    z_arm_int_exit();
 
     extern void z_thread_entry(k_thread_entry_t, void *, void *, void *);
     extern void idle(void *, void *, void *);
@@ -1193,18 +1200,17 @@ void os_pm_restore_zephyr(void)
     os_sched_restore_zephyr();
 }
 
+extern void sys_clock_announce_only_add_tick(int32_t ticks);
 void os_systick_handler_zephyr(void)
 {
-    extern void sys_clock_isr();
-    sys_clock_isr();
+    sys_clock_announce_only_add_tick(1);
     return;
 }
 
 uint64_t os_sys_tick_increase_zephyr(uint32_t tick_increment)
 {
     int64_t old_tick = sys_clock_tick_get();
-    sys_clock_announce_bypass_timeout_function(tick_increment);
-    //z_arm_int_exit();
+    sys_clock_announce_only_add_tick(tick_increment);
     return old_tick;
 }
 
@@ -1278,7 +1284,6 @@ uint32_t os_pm_next_timeout_value_get_zephyr(void)
                 void *cur_excluded_handle = *(((PlatformPMExcludedHandleQueueElem *)p_cur_queue_item)->handle);
                 if (cur_excluded_handle != NULL)
                 {
-
                     if (thread == cur_excluded_handle)
                     {
                         handle_checked = false;
