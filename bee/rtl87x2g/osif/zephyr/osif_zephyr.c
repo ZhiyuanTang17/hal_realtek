@@ -1147,7 +1147,7 @@ extern void z_thread_timeout(struct _timeout *t);
 extern void sys_clock_announce_only_add_ticks(int32_t ticks);
 
 void os_pm_return_to_idle_task_zephyr(void)
-{
+{ 
     arch_kernel_init();//perform arm v81mainline initialization: including fault exception init & msp setting.
 
     RamVectorTableUpdate(GDMA0_Channel9_VECTORn, _isr_wrapper);
@@ -1165,13 +1165,6 @@ void os_pm_return_to_idle_task_zephyr(void)
 
     __set_CONTROL(__get_CONTROL() | BIT1);
     __ISB();
-
-    extern void sys_clock_announce_process_timeout(void);
-    sys_clock_announce_process_timeout();
-    z_arm_int_exit();
-
-    extern void pm_resume_devices_rtk(void);
-    pm_resume_devices_rtk();
 
     extern void z_thread_entry(k_thread_entry_t, void *, void *, void *);
     extern void idle(void *, void *, void *);
