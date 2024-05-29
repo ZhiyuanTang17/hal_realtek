@@ -1,3 +1,3 @@
-zephyr_library()
+zephyr_library_named(rtl_common_uart)
 
 zephyr_library_sources(rtl_uart.c)
