@@ -1427,12 +1427,14 @@ K_THREAD_STACK_DEFINE(rtk_pm_workq_stack_area, RTK_PM_WORKQ_STACK_SIZE);
 struct k_work_q rtk_pm_workq;
 static struct pend_call pc;
 
+__ramfunc
 void pendcall_handler(struct k_work *item)
 {
     struct pend_call *pc = CONTAINER_OF(item, struct pend_call, work);
     pc->pend_func(pc->para1, pc->para2);
 }
 
+__ramfunc
 void os_pm_bottom_half_zephyr(void (*pend_func)(void))
 {
     pc.pend_func = (pend_func_t)pend_func;
@@ -1440,6 +1442,24 @@ void os_pm_bottom_half_zephyr(void (*pend_func)(void))
     pc.para2 = 0;
     k_work_init(&pc.work, pendcall_handler);
     k_work_submit_to_queue(&rtk_pm_workq, &pc.work);
+}
+
+static struct pend_call pc_test;
+
+//__ramfunc
+void pendcall_handler_test(struct k_work *item)
+{
+    //donothing;
+}
+
+//__ramfunc
+void os_pm_bottom_half_zephyr_test(void)
+{
+    pc_test.pend_func = NULL;
+    pc_test.para1 = NULL;
+    pc_test.para2 = 0;
+    k_work_init(&pc_test.work, pendcall_handler_test);
+    k_work_submit_to_queue(&rtk_pm_workq, &pc_test.work);
 }
 
 /* ************************************************* OSIF PATCH ************************************************* */
